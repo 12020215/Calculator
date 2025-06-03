@@ -4,10 +4,10 @@ import Exchangerate from './components/Exchangerate/Exchangerate';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/Calculator">
       <Routes>
-        <Route path="Exchangerate" element={<Exchangerate />} />
-        <Route path="Calculator" element={<Calculator />} />
+        <Route path="/Calculator" element={<Calculator />} />
+        <Route path="/Exchangerate" element={<Exchangerate />} />
       </Routes>
     </Router>
   );
