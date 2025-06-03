@@ -1,0 +1,230 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+    background-color: #2e2e2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.Exchangerate {
+    width: 320px;
+    height: calc(100vh - 40px);
+    max-width: 95vw;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #2e2e2e;
+    justify-content: flex-end;
+}
+
+@media screen and (max-width: 600px) {
+    .Exchangerate {
+        width: 95vw;
+        max-width: none;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+}
+
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.display-area {
+    display: flex;
+    flex-direction: column;
+    background: #3a3a3a;
+    padding: 15px;
+    border-radius: 15px;
+    min-height: 120px;
+    flex-shrink: 0;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
+    margin-bottom: 5px;
+    /* flex-grow: 0.5; */
+}
+
+.top-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin-bottom: 15px;
+    min-width: 0;
+}
+.bottom-row {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 8px;
+    gap: 8px;
+}
+.color-box {
+    height: 50px; /* 高さを増やす */
+    border-radius: 10px; /* 角丸を強調 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem; /* フォントサイズを調整 */
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    text-align: center; /* テキスト中央寄せを明示的に指定 */
+    padding: 0 5px; /* テキストがはみ出さないように左右パディングを微調整 */
+    box-sizing: border-box; /* パディングを幅に含める */
+}
+.color-box:hover {
+    transform: translateY(-2px);
+}
+.color-box:active {
+    transform: translateY(0);
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+}
+
+.color-box.pink {
+    background: linear-gradient(135deg, #ff6699, #e63366); /* グラデーション */
+    width: 220px; /* 固定幅を設定 (例: 110px、必要に応じて調整) */
+    flex-shrink: 0; /* 幅が縮まないようにする */
+}
+
+.color-box.blue {
+    background: linear-gradient(135deg, #6699ff, #3366e6); /* グラデーション */
+    width: 220px; /* 固定幅を設定 (例: 110px、必要に応じて調整) */
+    flex-shrink: 0; /* 幅が縮まないようにする */
+}
+
+/* オレンジとパープルの color-box に対する追加・修正 */
+/* input要素の親である .color-box orange/purple には width: 100% を指定する */
+.color-box.orange,
+.color-box.purple {
+    width: 100%; /* 明示的に100%にする */
+    margin-left: 0; /* 以前のblueに対するmargin-leftを打ち消す */
+    margin-right: 0; /* 以前のpinkに対するmargin-rightを打ち消す */
+    /* 背景などの個別のスタイルはそのまま */
+}
+
+
+.arrow-return-right img {
+    width: 30px;
+    color: white;
+}
+
+/* 通貨入力/出力フィールド */
+.currency-input,
+.currency-output {
+    width: 100%; /* 親の color-box の幅いっぱいに広がる */
+    height: 50px;
+    background: #333; /* 背景色 */
+    border: none; /* color-box自体に枠線があるのでinputにはなし */
+    border-radius: 10px;
+    color: #fff;
+    /* font-size は JavaScript で動的に設定されるため、CSSでは基本サイズのみ */
+    font-size: 1.6rem; /* JavaScriptでの初期サイズと合わせるか、これより小さめに設定 */
+    text-align: right; /* 右寄せ */
+    padding: 0 15px; /* 左右のパディング */
+    outline: none; /* フォーカス時のアウトラインをなくす */
+    transition: background 0.2s ease;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.3); /* 内側の影 */
+
+    /* JavaScriptでフォントサイズを調整するため、以下のCSSは削除またはコメントアウト */
+    /* white-space: nowrap; */
+    /* overflow: hidden; */
+    /* text-overflow: ellipsis; */
+}
+.currency-input::placeholder,
+.currency-output::placeholder {
+    color: #bbb; /* プレースホルダーの色 */
+    opacity: 0.7;
+}
+
+.currency-output {
+    background: #3a3a3a; /* 出力欄の背景色を少し変える */
+    font-weight: bold;
+}
+
+/* 通貨選択リストのオーバーレイ */
+.currency-list-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7); /* 半透明の黒 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* メニューより上に */
+    animation: fadeIn 0.2s;
+}
+
+.currency-list {
+    background: #333; /* リストの背景色 */
+    border-radius: 15px;
+    padding: 15px 0;
+    max-height: 80vh; /* 画面の80%を上限 */
+    overflow-y: auto; /* 溢れたらスクロール */
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    width: 80%; /* 幅を調整 */
+    max-width: 280px; /* 最大幅を設定 */
+}
+
+.currency-list div {
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.currency-list div:hover {
+    background: #4a4a4a; /* ホバー背景色 */
+}
+.currency-list div.selected-currency {
+    background: linear-gradient(90deg, #007bff, #0056b3); /* グラデーション */
+    color: #fff;
+    font-weight: bold;
+}
+.currency-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.currency-sub {
+    font-size: 0.9em;
+    color: #f0f0f0;
+}
+.Exchangerate-button {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.Exchangerate-button button {
+    width: 100%;
+    height: 70px;
+    padding: 0;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: white;
+    background: #555;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

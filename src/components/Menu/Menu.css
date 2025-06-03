@@ -1,0 +1,75 @@
+.vertical-menu {
+    position: absolute;
+    top: 45px;
+    left: 15px;
+    width: 220px;
+    background: #2f2f2f;
+    border-radius: 14px;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.13);
+    padding: 20px 0 20px 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    animation: menuIn 0.16s;
+}
+
+@keyframes menuIn {
+    from { opacity: 0; transform: translateY(0);}
+    to   { opacity: 1; transform: translateY(0);}
+}
+
+.vertical-menu-close-btn {
+    align-self: flex-start;
+    margin-left: 16px;
+    margin-bottom: 12px;
+    font-size: 2em;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: none;
+    color: #333;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.2s, color 0.2s;
+}
+.vertical-menu-close-btn:hover {
+    background: #f5f5f5;
+    color: #e53935;
+}
+
+.vertical-menu-title {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin: 0 0 18px 24px;
+    color: #1976d2;
+    text-align: left;
+    display: flex;
+    justify-content: center;
+}
+
+.vertical-menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vertical-menu-list li {
+    font-size: 1.1em;
+    color: #ffffff;
+}
+
+.vertical-menu-list a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 7px 5px;
+    display: block;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+}

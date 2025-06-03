@@ -1,0 +1,21 @@
+.app-menu-button {
+  position: absolute;
+  top: 55px;
+  left: 17px;
+  z-index: 3100;
+  font-size: 2em;
+  width: 48px;
+  height: 48px;
+  background: #2f2f2f;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app-menu-button:hover {
+  background: #2f2f2f;
+  color: #ffffff;
+}
