@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 import Calculator from './components/Calculator/Calculator';
 import Exchangerate from './components/Exchangerate/Exchangerate';
 
