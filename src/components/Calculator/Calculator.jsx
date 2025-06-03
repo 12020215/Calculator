@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import "./Calculator.css";
+import './Calculator.css';
 import { evaluate } from "mathjs";
 import { gsap } from "gsap";
+import AppMenuButton from '../AppMenuButton/AppMenuButton';
 
-const MOBILE_MARGIN = 32;
 const MAX_DIGIT = 15;
 
 const BUTTONS = [
@@ -49,6 +49,25 @@ const formatResult = (num) => {
     return String(num);
 };
 
+// パーセントを正しく変換
+function convertPercent(str) {
+    // 括弧式に%がつく場合 (3÷100)% など
+    str = str.replace(/\)(%)/g, ')*0.01');
+    // 掛け算・割り算の右辺が%の場合→ 100×5%→100*(5/100)
+    str = str.replace(/(\d+(?:\.\d+)?)\s*([\*\/])\s*(\d+(?:\.\d+)?)(%)/g,
+        (match, a, op, b) => `${a}${op}(${b}/100)`
+    );
+    // 足し算・引き算の右辺が%の場合→ 100+5%→100+(100*5/100)
+    str = str.replace(/(\d+(?:\.\d+)?)\s*([\+\-])\s*(\d+(?:\.\d+)?)(%)/g,
+        (match, a, op, b) => `${a}${op}(${a}*${b}/100)`
+    );
+    // 末尾の数値% → (n*0.01)
+    str = str.replace(/(\d+(?:\.\d+)?)(%)/g, (match, n) => `(${n}*0.01)`);
+    return str;
+}
+
+const isOperator = (v) => ["+", "-", "*", "/"].includes(v);
+
 const Calculator = () => {
     const [input, setInput] = useState("");
     const [result, setResult] = useState(0);
@@ -69,7 +88,6 @@ const Calculator = () => {
         localStorage.setItem("calcHistory", JSON.stringify(history));
     }, [history]);
 
-    // 下から上に履歴パネルが出るように
     useEffect(() => {
         if (!historyContainerRef.current) return;
         const historyContainer = historyContainerRef.current;
@@ -87,19 +105,19 @@ const Calculator = () => {
                 y: 0,
                 opacity: 1,
                 scale: 1,
-                duration: 0.3,
+                duration: 0.5,
                 ease: "power4.out",
                 onStart: () => { historyContainer.style.visibility = 'visible'; }
             });
-            } else {
-                gsap.to(historyContainer, {
-                    y: "100%",
-                    opacity: 0,
-                    scale: 0.98,
-                    duration: 0.3,
-                    ease: "power4.in",
-                    onComplete: () => { historyContainer.style.visibility = 'hidden'; }
-                });
+        } else {
+            gsap.to(historyContainer, {
+                y: "100%",
+                opacity: 0,
+                scale: 0.98,
+                duration: 0.5,
+                ease: "power4.in",
+                onComplete: () => { historyContainer.style.visibility = 'hidden'; }
+            });
         }
     }, [historyOpen]);
 
@@ -109,6 +127,7 @@ const Calculator = () => {
         }
     }, [input]);
 
+    // 括弧補完
     const balanceParentheses = (expression) => {
         const openCount = (expression.match(/\(/g) || []).length;
         const closeCount = (expression.match(/\)/g) || []).length;
@@ -118,6 +137,16 @@ const Calculator = () => {
     const handleButtonClick = (value) => {
         let rawInput = input.replace(/,/g, "");
 
+        // 対応する(がなければ)は押せない
+        if (value === ")") {
+            const openCount = (rawInput.match(/\(/g) || []).length;
+            const closeCount = (rawInput.match(/\)/g) || []).length;
+            if (openCount <= closeCount) return;
+            setInput(rawInput + value);
+            return;
+        }
+
+        // 数字の最大桁数
         if (typeof value === "number") {
             const match = rawInput.match(/(\d+(\.\d*)?)$/);
             if (match) {
@@ -128,59 +157,37 @@ const Calculator = () => {
             }
         }
 
-        if (value === "-") {
+        // 演算子連打禁止（先頭のマイナスのみ許可）
+        if (isOperator(value)) {
             if (!rawInput) {
-                setInput("-");
+                if (value === "-") setInput("-");
                 return;
             }
-            if (/[+\-*/.]$/.test(rawInput) && !rawInput.endsWith(".")) {
-                setInput(rawInput + value);
+            // 直前が演算子なら上書き（複数連続演算子禁止）
+            if (isOperator(rawInput.slice(-1))) {
+                setInput(rawInput.slice(0, -1) + value);
                 return;
             }
-            if (rawInput.endsWith("(") || rawInput.endsWith(" ")) {
-                setInput(rawInput + value);
-                return;
-            }
+            setInput(rawInput + value);
+            return;
         }
+
         if (value === "%") {
             if (rawInput === "" || /[+\-*/.]$/.test(rawInput)) {
                 setResult("エラー");
                 return;
             }
-            const lastNumberMatch = rawInput.match(/(\d+(\.\d*)?)$/);
-            if (!lastNumberMatch) {
-                setResult("エラー");
+            // 末尾が ) なら許可
+            if (rawInput.endsWith(")")) {
+                setInput(rawInput + "%");
                 return;
             }
-            const lastNumberStr = lastNumberMatch[0];
-            const percentValue = parseFloat(lastNumberStr);
-            const expressionBeforeLastNumber = rawInput.substring(0, lastNumberMatch.index);
-            let convertedExpression = "";
-            let baseCalculatedValue = 0;
-            const lastBaseValueMatch = expressionBeforeLastNumber.match(/(\d+(\.\d*)?)\s*([+\-*/])\s*$/);
-            if (lastBaseValueMatch) {
-                const baseNumberStr = lastBaseValueMatch[1];
-                const operator = lastBaseValueMatch[3];
-                const partBeforeOperator = expressionBeforeLastNumber.substring(0, lastBaseValueMatch.index);
-                try {
-                    baseCalculatedValue = evaluate(baseNumberStr);
-                } catch (e) {
-                    setResult("エラー");
-                    return;
-                }
-                convertedExpression = `${partBeforeOperator}${baseNumberStr}${operator}(${baseCalculatedValue} * ${percentValue / 100})`;
-            } else if (rawInput === lastNumberStr) {
-                convertedExpression = `(${percentValue} / 100)`;
-            } else {
-                try {
-                    baseCalculatedValue = evaluate(expressionBeforeLastNumber === "" ? "0" : expressionBeforeLastNumber);
-                } catch (e) {
-                    setResult("エラー");
-                    return;
-                }
-                convertedExpression = `${expressionBeforeLastNumber}(${baseCalculatedValue} * ${percentValue / 100})`;
+            // 末尾が数字なら許可
+            if (/\d$/.test(rawInput)) {
+                setInput(rawInput + "%");
+                return;
             }
-            setInput(convertedExpression);
+            setResult("エラー");
             return;
         }
         const currentNumberMatch = rawInput.match(/(\d+(\.\d*)?)$/);
@@ -188,7 +195,7 @@ const Calculator = () => {
         if (value === "." && currentNumberHasDecimal) {
             return;
         }
-        if (value === "(" || value === ")") {
+        if (value === "(") {
             setInput(rawInput + value);
             return;
         }
@@ -200,11 +207,7 @@ const Calculator = () => {
             setInput("0" + value);
             return;
         }
-        if (/[+\-*/]$/.test(rawInput) && /[+\-*/]/.test(value)) {
-            setInput(rawInput.slice(0, -1) + value);
-        } else {
-            setInput(rawInput + value);
-        }
+        setInput(rawInput + value);
     };
 
     const handleClearAll = () => {
@@ -217,30 +220,33 @@ const Calculator = () => {
         setInput(rawInput.slice(0, -1));
     };
     const handleCalculate = () => {
-        const currentInputForHistory = input.replace(/,/g, "");
-        setPreviousExpression(formatNumberInExpression(currentInputForHistory));
-        let expression = balanceParentheses(currentInputForHistory);
+        let currentInputForHistory = input.replace(/,/g, "");
+        let balancedInput = balanceParentheses(currentInputForHistory);
+        let expression = convertPercent(balancedInput); // パーセントを正しく変換
+        setPreviousExpression(formatNumberInExpression(balancedInput));
         if (!expression || /[+\-*/%]$/.test(expression)) {
             setResult("エラー");
             return;
         }
         try {
+            let expressionForEval = expression;
             if (/^[+\-*/]/.test(expression)) {
                 const prevResultNum = parseFloat(String(result).replace(/,/g, ''));
                 if (result !== "エラー" && !isNaN(prevResultNum)) {
-                    expression = prevResultNum + expression;
+                    expressionForEval = prevResultNum + expression;
                 } else {
-                    expression = "0" + expression;
+                    expressionForEval = "0" + expression;
                 }
             }
-            let newResult = evaluate(expression);
+            let newResult = evaluate(expressionForEval);
             let formattedResult = formatResult(newResult);
 
             setResult(formattedResult);
             setInput(formattedResult);
+            // 修正: 履歴に追加する式も「括弧補完済み」を使う
             setHistory((prev) => [
                 ...prev,
-                `${formatNumberInExpression(currentInputForHistory)} = ${formattedResult}`
+                `${formatNumberInExpression(balancedInput)} = ${formattedResult}`
             ]);
         } catch (e) {
             setResult("エラー");
@@ -268,18 +274,35 @@ const Calculator = () => {
 
     return (
         <div className="calculator">
+            <AppMenuButton />
             <div className="display" ref={displayRef}>
                 {previousExpression && (
                     <div className="previous-expression">
                         {toDisplaySymbols(formatNumberInExpression(previousExpression))}
                     </div>
                 )}
-                <input
-                    type="text"
-                    value={toDisplaySymbols(formatNumberInExpression(input))}
-                    readOnly
-                    ref={displayInputRef}
-                />
+                <div className="input-row">
+                    <input
+                        type="text"
+                        value={toDisplaySymbols(formatNumberInExpression(input))}
+                        readOnly
+                        ref={displayInputRef}
+                    />
+                    {/* 括弧補完ヒント */}
+                    {(() => {
+                        const rawInput = input.replace(/,/g, "");
+                        const openCount = (rawInput.match(/\(/g) || []).length;
+                        const closeCount = (rawInput.match(/\)/g) || []).length;
+                        if (openCount > closeCount) {
+                            return (
+                                <span className="paren-hint">
+                                    {")".repeat(openCount - closeCount)}
+                                </span>
+                            );
+                        }
+                        return null;
+                    })()}
+                </div>
             </div>
             <div className="buttons">
                 <button onClick={handleClearAll}>AC</button>
@@ -297,17 +320,17 @@ const Calculator = () => {
                         {btn.label}
                     </button>
                 ))}
-                <button className="history-btn" onClick={() => setHistoryOpen(!historyOpen)}>R</button>
+                <button className="history-btn" onClick={() => setHistoryOpen(!historyOpen)}>履歴</button>
                 <button className="equal-btn" onClick={handleCalculate}>=</button>
             </div>
             <div className="history-container" ref={historyContainerRef}>
                 <div className="history-header">
                     <div className="history-header-title">
                         計算履歴
-                        <span className="history-header-sub">(式・答えを再利用可能)</span>
+                        <span className="history-header-sub">(式・結果を再利用可能)</span>
                     </div>
                     <div className="history-header-buttons">
-                        <button className="clear-history-btn-small" onClick={handleClearHistory}>AC</button>
+                        <button className="clear-history-btn-small" onClick={handleClearHistory}>クリア</button>
                         <button className="close-history" onClick={() => setHistoryOpen(false)}>✖️</button>
                     </div>
                 </div>
@@ -325,7 +348,7 @@ const Calculator = () => {
                                 <div className="history-item-buttons">
                                     <button className="delete-btn" onClick={() => handleDeleteHistory(index)}>削除</button>
                                     <button className="reuse-btn" onClick={() => handleReuseEquation(entry)}>式</button>
-                                    <button className="reuse-btn" onClick={() => handleReuseResult(entry)}>Ans</button>
+                                    <button className="reuse-btn" onClick={() => handleReuseResult(entry)}>結果</button>
                                 </div>
                             </li>
                         );
