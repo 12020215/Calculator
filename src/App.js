@@ -7,7 +7,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="Exchangerate" element={<Exchangerate />} />
-        <Route path="/" element={<Calculator />} />
+        <Route path="Calculator" element={<Calculator />} />
       </Routes>
     </Router>
   );
